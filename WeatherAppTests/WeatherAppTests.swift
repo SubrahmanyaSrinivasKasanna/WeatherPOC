@@ -11,16 +11,18 @@ import XCTest
 
 class WeatherAppTests: XCTestCase {
     
-    let weatherVC = WeatherViewController()
-
+    var weatherVC : WeatherViewController!
+    
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
+        weatherVC = WeatherViewController()
     }
     
     override func tearDown() {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
+        weatherVC = nil
     }
     
     //ServiceTests
@@ -34,7 +36,7 @@ class WeatherAppTests: XCTestCase {
     }
     func testOpenWeatherService() {
         let url = WeatherUtils.searchURLByCity(city: "Dallas")
-        WebServiceManager.getWeatherData(requestURL: url!) { (resultData, error) in
+        WebServiceManager.getWeatherInformation(url: url) { (resultData, error) in
             XCTAssertNotNil(resultData)
         }
     }

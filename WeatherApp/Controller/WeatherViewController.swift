@@ -15,16 +15,16 @@ import UIKit
  ***/
 
 /***
- I chhosen seach bar to get the City as input from user beacuse it's easy to implement. We have many different ways to get the same behaivour but as per time cinstarints I choosen search bar as easiet to implement.
+ I choose seach bar to get the City as input from user beacuse it's easy to implement. We have many different ways to get the same behaivour but as per time constraint i feel search bar is faster to implement.
  
- I choosen USERDEFAULTS to store the last save search instead of PLIST, CoreData or any database. The main reason is the data size is very small, and have to store only one record.
+ I choose USERDEFAULTS to store the last save search instead of PLIST, CoreData or any database. The main reason is the data size is very small, and have to store only one record.
  
   I have included the service test cases but Still there is a huge scope of implementing the testcases. I would more concentrate on XCUITESTCASE to automate my project. It's obvious to implement UI automate test framework
  
  ***/
 
 class WeatherViewController: UIViewController, UISearchBarDelegate {
-
+    // Mark: Properties declaration
     @IBOutlet weak var weatherSearchBar: UISearchBar!
     lazy var persistLastSearch: UserDefaults = UserDefaults.standard
     
@@ -38,14 +38,6 @@ class WeatherViewController: UIViewController, UISearchBarDelegate {
     @IBOutlet weak var weatherIcon: UIImageView!
     
     var weatherInfoResponse: WeatherDataModel?
-    
-    let imageView:UIImageView = {
-        let iv = UIImageView()
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        let image = UIImage(named: "theme")
-        iv.image = image
-        return iv
-    }()
     
     //Making sure not to create the object until it's first time use..
     lazy var activityIndicator: UIActivityIndicatorView = {
@@ -61,6 +53,7 @@ class WeatherViewController: UIViewController, UISearchBarDelegate {
         weatherSearchBar.delegate = self
         self.view.addSubview(activityIndicator)
         self.addConstraints()
+        // To display persisted weather data when app launch
         self.showWeatherDataToView(nil)
     }
 
@@ -70,7 +63,7 @@ class WeatherViewController: UIViewController, UISearchBarDelegate {
     }
     
     // MARK: - SerachBar Delegate Methods
-   
+    
     public func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
         searchBar.resignFirstResponder()
         let url = WeatherUtils.searchURLByCity(city: searchBar.text ?? "")
@@ -92,11 +85,11 @@ class WeatherViewController: UIViewController, UISearchBarDelegate {
     func getWeatherDetails(url: URL){
         self.activityIndicator.startAnimating()
 
-        WebServiceManager.getWeatherData(requestURL: url) { (object, error) in
+        WebServiceManager.getWeatherInformation(url: url) { (object, error) in
             DispatchQueue.main.async {
                 self.activityIndicator.stopAnimating()
             }
-            if let error = error{
+            if let error = error {
                 WeatherUtils.showAlert(controller: self, title: ERROR, message: error.localizedDescription)
             }
             if object != nil{
@@ -105,16 +98,16 @@ class WeatherViewController: UIViewController, UISearchBarDelegate {
                     {
                         
                         self.weatherInfoResponse = WeatherDataModel(json:json as JSON)
-                        if let responseCode = json["cod"] as? String, responseCode == "404" {
-                            WeatherUtils.showAlert(controller: self, title: ERROR, message: (json["message"] as? String) ?? "Failed to retrive weather data" )
+                        if let responseCode = json["cod"] as? String, responseCode == CITY_NOT_FOUND_ERROR {
+                            WeatherUtils.showAlert(controller: self, title: ERROR, message: (json["message"] as? String) ?? WEATHER_DATA_FAILURE )
 
                         }
                         DispatchQueue.main.async {
                             guard let  weather = self.weatherInfoResponse?.weather, weather.count > 0 else { return }
                             let url = WeatherUtils.urlForIcon(iconString: weather[0].icon)
-                            WebServiceManager.getWeatherInformation(url: url) { [unowned self](resultData) in
+                            WebServiceManager.getWeatherInformation(url: url) { [unowned self](resultData, error) in
                                 DispatchQueue.main.async { [unowned self] in
-                                    guard let image = UIImage(data: resultData) else { return }
+                                    guard let image = UIImage(data: resultData as! Data) else { return }
                                     self.weatherInfoResponse?.imageIcon = image
                                     self.showWeatherDataToView(self.weatherInfoResponse)
                                 }
